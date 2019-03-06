@@ -1,29 +1,35 @@
----
-title: "Data Science Course 5 Assignment 1"
-output: 
-    html_document:
-    keep_md: true
----
+Data Science Course 5 Assignment 1
+================
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## 1. Code for reading in the dataset and/or processing the data
+1. Code for reading in the dataset and/or processing the data
+-------------------------------------------------------------
 
 Read data and convert dates from chr to date type
-```{r}
+
+``` r
 data <- read.csv("activity.csv", stringsAsFactors = FALSE)
 library(lubridate)
+```
+
+    ## 
+    ## Attaching package: 'lubridate'
+
+    ## The following object is masked from 'package:base':
+    ## 
+    ##     date
+
+``` r
 data$date <- ymd(data$date)
 ```
 
-## 2. Histogram of the total number of steps taken each day
+2. Histogram of the total number of steps taken each day
+--------------------------------------------------------
 
 ### Calculate number of steps per day
 
 Apply sum on each daily split of steps counts:
-```{r}
+
+``` r
 stepsPerDay <- lapply(
     split(data$steps, factor(as.character(data$date))),
     sum,
@@ -31,7 +37,8 @@ stepsPerDay <- lapply(
 ```
 
 Flatten the list:
-```{r}
+
+``` r
 stepsPerDay <- data.frame(
     date = names(stepsPerDay),
     steps = unlist(stepsPerDay),
@@ -42,21 +49,34 @@ stepsPerDay <- data.frame(
 ### Plot
 
 Plot column chart:
-```{r}
+
+``` r
 hist(stepsPerDay$steps)
 ```
 
+![](PA1_template_files/figure-markdown_github/unnamed-chunk-4-1.png)
 
-## 3. Mean and median number of steps taken each day
-```{r}
+3. Mean and median number of steps taken each day
+-------------------------------------------------
+
+``` r
 mean(stepsPerDay$steps, na.rm = TRUE)
+```
+
+    ## [1] 9354.23
+
+``` r
 median(stepsPerDay$steps, na.rm = TRUE)
 ```
 
-## 4. Time series plot of the average number of steps taken
+    ## [1] 10395
+
+4. Time series plot of the average number of steps taken
+--------------------------------------------------------
 
 Average of steps within same interval across each day
-```{r}
+
+``` r
 stepsPerInterval <- lapply(
     split(data$steps, factor(as.character(data$interval))),
     mean,
@@ -71,7 +91,8 @@ stepsPerInterval <- stepsPerInterval[order(stepsPerInterval$interval) ,]
 ```
 
 Plot time series
-```{r}
+
+``` r
 plot(stepsPerInterval$interval, stepsPerInterval$meansteps,
      type = "l",
      xlab = "5-Minute intervals",
@@ -80,27 +101,41 @@ plot(stepsPerInterval$interval, stepsPerInterval$meansteps,
 )
 ```
 
-## 5. The 5-minute interval that, on average, contains the maximum number of steps
-```{r}
+![](PA1_template_files/figure-markdown_github/unnamed-chunk-7-1.png)
+
+5. The 5-minute interval that, on average, contains the maximum number of steps
+-------------------------------------------------------------------------------
+
+``` r
 stepsPerInterval[which.max(stepsPerInterval$meansteps), "interval"]
 ```
 
-## 6. Code to describe and show a strategy for imputing missing data
+    ## [1] 835
+
+6. Code to describe and show a strategy for imputing missing data
+-----------------------------------------------------------------
 
 Number of rows with NAs
-```{r}
+
+``` r
 sum(complete.cases(data) == 0)
 ```
 
+    ## [1] 2304
+
 Replace NA from data by zero and create a new dataset with missing values filled in
-```{r}
+
+``` r
 dataclean <- data
 dataclean$steps[is.na(dataclean$steps) == TRUE] <- 0
 ```
 
-## 7. Histogram of the total number of steps taken each day after missing values are imputed
+7. Histogram of the total number of steps taken each day after missing values are imputed
+-----------------------------------------------------------------------------------------
+
 Histogram of total number of steps per day with imputed data
-```{r}
+
+``` r
 stepsPerDayclean <- lapply(
     split(dataclean$steps, factor(as.character(dataclean$date))),
     sum,
@@ -114,22 +149,38 @@ stepsPerDayclean <- data.frame(
 hist(stepsPerDayclean$steps)
 ```
 
+![](PA1_template_files/figure-markdown_github/unnamed-chunk-11-1.png)
+
 Comparison of mean and median original vs. imputed data
-```{r}
+
+``` r
 summary(stepsPerDay$steps)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##       0    6778   10395    9354   12811   21194
+
+``` r
 summary(stepsPerDayclean$steps)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##       0    6778   10395    9354   12811   21194
+
+``` r
 sum(stepsPerDay$steps != stepsPerDayclean$steps)
 ```
-For both original and imputed data the mean and median for steps per day are
-equal. Each daily amount of steps is equal between original and imputed data.
-This is due to the replacement of NA by zeros as imputing strategy which
-does not increase the daily sums.
 
-## 8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+    ## [1] 0
 
-Include information on weekdays (with Germany localization scheme) and make
-factor with levels "Weekday" and "Weekend"
-```{r}
+For both original and imputed data the mean and median for steps per day are equal. Each daily amount of steps is equal between original and imputed data. This is due to the replacement of NA by zeros as imputing strategy which does not increase the daily sums.
+
+8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+------------------------------------------------------------------------------------------------------------
+
+Include information on weekdays (with Germany localization scheme) and make factor with levels "Weekday" and "Weekend"
+
+``` r
 dataclean$weekday <- weekdays(dataclean$date)
 weekdays <- c("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag")
 weekenddays <- c("Samstag", "Sonntag")
@@ -139,7 +190,8 @@ dataclean$weekday <- factor(dataclean$weekday)
 ```
 
 Calculate average per 5-minute interval grouped by weekday and weekend
-```{r}
+
+``` r
 stepsWeekday <- aggregate(steps ~ weekday + interval,
                data = dataclean,
                FUN = mean)
@@ -150,7 +202,8 @@ stepsWeekday <- spread(data = stepsWeekday,
 ```
 
 Make panel plot comparing weekdays and weekends.
-```{r}
+
+``` r
 maxsteps <- max(stepsWeekday[, 2])
 par(mfrow = c(2, 1))
 plot(stepsWeekday$interval, stepsWeekday$Weekday,
@@ -168,3 +221,5 @@ plot(stepsWeekday$interval, stepsWeekday$Weekend,
      main = "Weekends - Mean steps per interval"
 )
 ```
+
+![](PA1_template_files/figure-markdown_github/unnamed-chunk-15-1.png)
